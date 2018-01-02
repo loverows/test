@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="Author" content="">
+    <meta name="Keywords" content="">
+    <meta name="Description" content="">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <title>Android下的多指事件scale</title>
+    <style type="text/css">
+        * {margin: 0; padding: 0;}
+        a {text-decoration: none;}
+        ul,li {list-style: none;}
+        body {font-family: "Microsoft yahei";}
+        #box {width: 100px; height: 100px; background: #ddd;}
+    </style>
+</head>
+<body>
+    <div id="box"></div>
+    <script type="text/javascript">
+        /*
+            touches.
+            判断是不是多指事件.
+         */
+         var callback = {
+                start(){
+                    this.style.background = 'red';
+                },
+                move(e){
+                    // 之前的比例.  需要添上系数. 变化大.0.1
+                    var oddS = cssTransform( this,'scale' );
+                    cssTransform( this,'scale',e.scale*oddS );
+                },
+                end(){
+                    this.style.background = '';
+                }
+             },
+            // 开关
+             isGesture = false,
+             num = 0,
+             startDis = 0;
+        function getPiontScale(Piont1,Piont2){
+            // 勾股定理.
+            var x = Piont1.pageX - Piont2.pageX,
+                y = Piont1.pageY - Piont2.pageY;
+            return Math.sqrt(Math.pow(x, 2) + Math.pow(y,2));
+        }
+        gesture(box,callback);
+        function gesture(obj,callback){
+            obj.addEventListener('touchstart',function (e) {
+                var touches = e.touches;
+                if(touches.length >= 2){ //是否为多指.2
+                    isGesture = true;
+                    // 两点距离.
+                    startDis = getPiontScale(touches[0],touches[1]);
+                    callback.start&&callback.start.call(this);
+                };
+            })
+            obj.addEventListener('touchmove',function (e) {
+                var touches = e.touches;
+                if(touches.length >= 2 && isGesture){ //是否为多指.2
+                    isGesture = true;
+                    // 缩放后两指的距离
+                    var nowDis = getPiontScale(touches[0],touches[1]);
+                    // 比例.
+                    e.scale = nowDis/startDis;
+                    callback.move&&callback.move.call(this,e);
+                };
+            })
+            obj.addEventListener('touchend',function (e) {
+                if(isGesture) {
+                    callback.end&&callback.end.call(this);
+                }
+                isGesture = false;
+            })
+        }
+    </script>
+</body>
+</html>
